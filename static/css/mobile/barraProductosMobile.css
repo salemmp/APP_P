@@ -1,0 +1,40 @@
+@media (max-width: 768px) {
+
+    .barra_productos{
+        font-family: sans-serif;
+        font-size: 17px;
+        width: 100%;
+        margin-top: 20px;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        
+        
+      
+    }
+    .seleccion_productos{
+        display: flex;
+        margin-left: 0px;
+    
+    
+    }
+
+    .barra_productos .carrito{
+        font-size: 35px;
+        padding: 10px;
+        margin-left: 20px;
+        margin-right: 20px;
+        transition: all .2s;
+        
+        overflow: hidden;
+      
+        border-radius: 10px;
+    }
+    .seleccion_productos ul li a{
+        text-decoration: none;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        transition: all .2s;
+    }
+}

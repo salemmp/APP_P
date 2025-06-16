@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/productos.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/barraProductos.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/contenedorProductos.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/cartaProducto.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/modals.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/carro.css')}}">
+
+    <link rel="stylesheet" href="{{url_for('static',filename='css/mobile/barraProductosMobile.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/mobile/contenedorProductosMobile.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/mobile/cartaProductoMobile.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/mobile/carroMobile.css')}}">
+
+    <title>Document</title>
+</head>
+<body>
+    <div class="container_nav">
+        <nav>
+            <ul>
+                <li><a href="">Inicio</a></li>
+                <li><a href="">Tienda</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    
+
+    <div class="barra_productos">
+        <div class="seleccion_productos">
+            <ul>
+                <li><a class="opcion" href="" onclick="cargarProductos('gorra',event)" >Gorras</a></li>
+                <li><a class="opcion" href="" onclick="cargarProductos('chemise',event)">Chemises</a></li>
+                <li><a class="opcion" href="" onclick="cargarProductos('manga larga',event)">Manga Larga</a></li>
+                <li><a class="opcion" href="" onclick="cargarProductos('franela',event)">Franelas</a></li>
+            </ul>
+        </div>
+        <div class="carrito" id="carrito_de_compra">
+            <i class="bi bi-cart4"></i>
+        </div>
+    </div>
+
+    <div class="carro_fondo" id="carro_fondo">
+      <div class="carro_contenido" >
+        <span class="equis_carro" id="carro_cerrar"><i class="bi bi-x-lg"></i></span>
+        <table>
+          <thead>
+            <tr>
+              <td>Producto</td>
+              <td>Talla</td>
+              <td>Precio</td>
+              <td>Cantidad</td>
+              <td>Total</td>
+              <td> </td>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            
+          </tbody>
+        </table>
+        <span>Total a pagar: <span id="total_a_pagar"></span></span>
+        <button class="btn_pagar"  onclick="pagar()"><a href="" id="btn_pagar">Pagar<i class="bi bi-whatsapp"></i></a></button>
+      </div>
+    </div>
+
+
+
+
+
+
+<div class="contenedor_productos" id="contenedor-productos">
+    
+
+      
+
+      
+    
+
+    
+     
+</div>
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+     AOS.init();
+    
+   
+
+
+
+
+
+    
+  
+  
+  const cargarProductos = async (tipo,event) => {
+    event.preventDefault()
+   
+    try {
+        // Hacemos la petición al servidor Flask
+        const res = await fetch('/obtener_productos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ tipo: tipo }) // Enviamos el tipo: "gorra", "franela", etc.
+        });
+
+        const data = await res.json(); // Esperamos la respuesta y la convertimos en JSON
+        console.log(data); // Para que veas en consola qué llega desde Flask
+
+        mostrarProductos(data); // Llamamos a la función que construye las cartas y los modales
+
+    } catch (error) {
+        console.error('Error al cargar productos:', error);
+    }
+}
+
+
+
+function mostrarProductos(productos) {
+    const contenedor = document.getElementById('contenedor-productos');
+    contenedor.innerHTML = ''; // Limpiamos antes de agregar nuevos
+
+    productos.forEach(prod => {
+        // Creamos el contenedor de la carta
+        const carta = document.createElement('div');
+        carta.className = 'product-card';
+        carta.setAttribute('data-aos', 'fade-up');
+        carta.innerHTML = `
+        <img src="{{ url_for('static', filename='img/masgrande.jpg') }}"  alt="Gorra Dark Perezoso" class="product-image" id="btn_abrir_modal" onclick="abrirModal('modal-${prod.id}')">
+        <div class="product-info">
+          <div class="product-header">
+            <h3>${prod.nombre}</h3>
+            <span class="price">$${prod.precio}</span>
+          </div>
+         <div class="size-options">
+                  <button class="size-btn" onclick="seleccionarTalla(this)">S/M</button>
+                  <button class="size-btn" onclick="seleccionarTalla(this)">L/XL</button>
+            
+                </div>
+           <button class="add-button" onclick="añadirAlCarrito(${prod.id},'${prod.nombre}','${prod.precio}')">AÑADIR AL CARRITO</button>
+            
+          
+        `;
+
+        // Creamos el modal oculto inicialmente
+        const fondo_modal = document.createElement('div');
+        
+        fondo_modal.id = `modal-${prod.id}`;
+        fondo_modal.className = 'modal_fondo';
+
+        fondo_modal.innerHTML = `
+          <div class="card">
+            <span class="equis"><i class="bi bi-x-lg" onclick="cerrarModal('modal-${prod.id}')"></i></span>
+            <img src="{{ url_for('static', filename='img/masgrande.jpg') }}" alt="Dark Perezoso" class="product-img">
+            <div class="title-price">
+              <h2>${prod.nombre}</h2>
+              <div class="price">$${prod.precio}</div>
+            </div>
+          
+            <div class="sizes">
+              <strong>Tallas:</strong>
+              <div class="size-options">
+                  <button class="size-btn" onclick="seleccionarTalla(this)">S/M</button>
+                  <button class="size-btn" onclick="seleccionarTalla(this)">L/XL</button>
+            
+                </div>
+              <strong>Unidades:</strong>
+              <div class="quantity-selector">
+                  <button onclick="cambiarCantidad(-1,'${prod.id}')">−</button>
+                  <input type="text" id="cantidad-${prod.id}" value="1" readonly>
+                  <button onclick="cambiarCantidad(1,'${prod.id}')">+</button>
+                </div>
+            </div>
+          
+            <div class="features">
+              <p>🔁 <span>Ajustable: No</span></p>
+              <p>💧 <span>Impermeable: No</span></p>
+              <p>🧢 <span>Frontal: Curvo</span></p>
+            </div>
+          
+            <div class="add-cart" onclick="añadirAlCarrito_modal(${prod.id},'${prod.nombre}','${prod.precio}')">AÑADIR AL CARRITO</div>
+          </div>
+        `;
+
+        // Agregamos la carta y su modal al DOM
+        contenedor.appendChild(carta);
+        contenedor.appendChild(fondo_modal);
+
+
+
+        
+    });
+}
+
+// Función para mostrar un modal
+function abrirModal(idModal) {
+    
+    document.getElementById(idModal).style.visibility = 'visible';
+}
+
+// Función para ocultar un modal
+function cerrarModal(idModal) {
+    document.getElementById(idModal).style.visibility = 'hidden';
+}
+
+
+
+
+
+
+function cambiarCantidad(valor,id) {
+    console.log(id)
+    const input = document.getElementById(`cantidad-${id}`);
+    let cantidad = parseInt(input.value);
+    cantidad += valor;
+    if (cantidad < 1) cantidad = 1;
+    if (cantidad > 20) cantidad = 20;
+    input.value = cantidad;
+  }
+  
+
+  
+
+
+  let tallaSeleccionada = null;
+  
+  function seleccionarTalla(boton) {
+    // Quitar la selección anterior
+    const botones = document.querySelectorAll('.size-btn');
+    botones.forEach(b => b.classList.remove('selected'));
+  
+    // Añadir la clase seleccionada al botón actual
+    boton.classList.add('selected');
+    tallaSeleccionada = boton.textContent;
+  }
+  
+
+  function añadirAlCarrito(id,nombre,precio) {
+    let cantidad = 1;
+    if (!tallaSeleccionada) {
+      Toastify({
+        text: "Por favor, selecciona una talla antes de añadir al carrito.",
+        duration: 3000,
+        className: "info",
+        gravity: "top", // `top` or `bottom`
+        position: "center",
+        style: {
+          background: "red",
+          
+        }
+      }).showToast();
+     
+      return;
+    }
+    let array=[nombre,tallaSeleccionada,cantidad,precio]
+    añadirAlaTabla(array)
+
+    Toastify({
+        text: `Has añadido ${cantidad} unidad(es) ${nombre} ${tallaSeleccionada} al carrito 🛒`,
+        duration: 3000,
+        className: "info",
+        gravity: "top", // `top` or `bottom`
+        position: "center",
+        style: {
+          background: "rgb(22, 146, 255)",
+          
+        }
+      }).showToast();
+
+
+    
+    cantidad = 0;
+    const botones = document.querySelectorAll('.size-btn');
+    botones.forEach(b => b.classList.remove('selected'));
+    tallaSeleccionada = null;
+
+  }
+
+
+
+
+
+
+
+
+
+  function añadirAlCarrito_modal(id,nombre,precio) {
+    const cantidad = document.getElementById(`cantidad-${id}`).value;
+  
+    if (!tallaSeleccionada) {
+      Toastify({
+        text: "Por favor, selecciona una talla antes de añadir al carrito.",
+        duration: 3000,
+        className: "info",
+        gravity: "top", // `top` or `bottom`
+        position: "center",
+        style: {
+          background: "red",
+          
+        }
+      }).showToast();
+      return;
+    }
+    let array=[nombre,tallaSeleccionada,cantidad,precio]
+    añadirAlaTabla(array)
+    Toastify({
+        text: `Has añadido ${cantidad} unidad(es) ${nombre} ${tallaSeleccionada} al carrito 🛒`,
+        duration: 3000,
+        className: "info",
+        gravity: "top", // `top` or `bottom`
+        position: "center",
+        style: {
+          background: "rgb(22, 146, 255)",
+          
+        }
+      }).showToast();
+    
+    const botones = document.querySelectorAll('.size-btn');
+    botones.forEach(b => b.classList.remove('selected'));
+    const input = document.getElementById(`cantidad-${id}`);
+    input.value=1
+    tallaSeleccionada = ''
+    
+  }
+  
+  
+  </script>
+  <script src="{{ url_for('static', filename='js/carro.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/barraProductos.js') }}"></script>
+</body>
+</html>
